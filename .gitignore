@@ -1,0 +1,18 @@
+# pytest
+.pytest_cache/
+
+# python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# data and outputs (optional)
+# /data/
+# /outputs/
+
+# ignoring all instanton outputs
+/outputs/**/instantons
+
+# utils folder
+/utils/
+

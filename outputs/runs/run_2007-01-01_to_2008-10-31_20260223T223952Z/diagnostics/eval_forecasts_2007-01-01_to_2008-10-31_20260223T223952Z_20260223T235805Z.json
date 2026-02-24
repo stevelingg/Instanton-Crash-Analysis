@@ -1,0 +1,128 @@
+{
+  "built_at_utc": "2026-02-23T23:58:13+00:00",
+  "scores": {
+    "n": 1852,
+    "mean_log_score": 0.2261793286324841,
+    "mean_brier": 0.07229884186614964
+  },
+  "scores_by_query": [
+    {
+      "Tdays": 20,
+      "delta": 0.2,
+      "n": 463,
+      "mean_log_score": 0.16943557791554198,
+      "mean_brier": 0.05615267542561319
+    },
+    {
+      "Tdays": 20,
+      "delta": 0.3,
+      "n": 463,
+      "mean_log_score": 0.09435236277632435,
+      "mean_brier": 0.026823347415351098
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.2,
+      "n": 463,
+      "mean_log_score": 0.3553936478185303,
+      "mean_brier": 0.11463662870720807
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.3,
+      "n": 463,
+      "mean_log_score": 0.2855357260195397,
+      "mean_brier": 0.0915827159164262
+    }
+  ],
+  "inputs": {
+    "forecasts_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260223T223952Z.csv",
+    "state_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260221T210644+0000.csv",
+    "params_json": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260222T005423+0000.json",
+    "instantons_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\instantons"
+  },
+  "forecast_metadata_detected": true,
+  "window_eval": {
+    "start": "2007-01-01",
+    "end": "2008-10-31"
+  },
+  "reliability_bins": 10,
+  "bootstrap": {
+    "reps": 200,
+    "seed": 2026,
+    "date_clustered": true
+  },
+  "outputs": {
+    "eval_joined_csv": "eval_joined_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "scores_by_group_csv": "scores_by_group_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "reliability_csv": "reliability_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "calibration_overall_csv": "calibration_overall_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "calibration_by_group_csv": "calibration_by_group_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "is_diagnostics_summary_csv": "is_diagnostics_summary_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "bootstrap_scores_overall_csv": "bootstrap_scores_overall_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "bootstrap_scores_by_group_csv": "bootstrap_scores_by_group_forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_20260223T235805Z.csv",
+    "plots": {
+      "files": [
+        "reliability_all_groups.png"
+      ],
+      "groups": {
+        "T20_delta0.20": [
+          "reliability_T20_delta0.20.png",
+          "forecast_T20_delta0.20.png",
+          "ess_T20_delta0.20.png",
+          "weights_T20_delta0.20.png"
+        ],
+        "T20_delta0.30": [
+          "reliability_T20_delta0.30.png",
+          "forecast_T20_delta0.30.png",
+          "ess_T20_delta0.30.png",
+          "weights_T20_delta0.30.png"
+        ],
+        "T60_delta0.20": [
+          "reliability_T60_delta0.20.png",
+          "forecast_T60_delta0.20.png",
+          "ess_T60_delta0.20.png",
+          "weights_T60_delta0.20.png"
+        ],
+        "T60_delta0.30": [
+          "reliability_T60_delta0.30.png",
+          "forecast_T60_delta0.30.png",
+          "ess_T60_delta0.30.png",
+          "weights_T60_delta0.30.png"
+        ]
+      }
+    }
+  },
+  "naive_mc_checks": null,
+  "cli_args": {
+    "run_dir": "outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z",
+    "forecasts_csv": null,
+    "forecasts_dir": "outputs/forecasts",
+    "forecasts_pattern": "*forecasts_*.csv",
+    "state_csv": null,
+    "state_dir": "data/processed",
+    "state_pattern": "state_*.csv",
+    "params_json": null,
+    "params_dir": "outputs/params",
+    "params_pattern": "sv_params_*.json",
+    "instantons_dir": null,
+    "out_dir": null,
+    "reliability_bins": 10,
+    "bootstrap_reps": 200,
+    "bootstrap_seed": 2026,
+    "make_plots": true,
+    "plot_max_groups": 12,
+    "run_naive_checks": false,
+    "naive_check_mode": "stratified",
+    "naive_prob_bands": "0.01,0.03,0.05,0.10,0.20,0.30,0.50",
+    "p_lo": 0.01,
+    "p_hi": 0.5,
+    "naive_min_expected_hits": 20.0,
+    "naive_max_total": 200,
+    "naive_max_per_stratum": 5,
+    "naive_n": 20000,
+    "is_n": 5000,
+    "seed_is": 11,
+    "seed_mc": 23
+  }
+}

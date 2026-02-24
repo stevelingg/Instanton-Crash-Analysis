@@ -1,0 +1,80 @@
+{
+  "run_type": "run",
+  "built_at_utc": "2026-02-23T22:58:50+00:00",
+  "run_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z",
+  "inputs": {
+    "state_source_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260221T210644+0000.csv",
+    "params_json": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260222T005423+0000.json"
+  },
+  "params": {
+    "mu": 0.07013891640769485,
+    "kappa": 1.2047633088435226,
+    "vbar": 0.028719121718450338,
+    "xi": 0.22102283526909539,
+    "rho": 0.010267259117677749,
+    "dt_years": 0.003968253968253968
+  },
+  "window": {
+    "start": "2007-01-01",
+    "end": "2008-10-31"
+  },
+  "grid": {
+    "tdays": [
+      20,
+      60
+    ],
+    "delta": [
+      0.2,
+      0.3
+    ]
+  },
+  "framework": {
+    "forward_looking_excludes_origin": false,
+    "tau0_regime": "if d0 >= d then tau_d=0 and event already true at origin => p_hat=1 (no instanton/IS needed)",
+    "HIT_EPS": 0.0001
+  },
+  "is": {
+    "N": 5000,
+    "lam": 0.5,
+    "umax": 10.0,
+    "seed_base": 123,
+    "seed_mode": "per_query"
+  },
+  "mam": {
+    "max_iter": 200,
+    "refine_radius": 5
+  },
+  "parallel": {
+    "jobs": 6,
+    "chunk_days": null
+  },
+  "outputs": {
+    "forecasts_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260223T223952Z.csv",
+    "forecasts_meta": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260223T223952Z_metadata.json",
+    "instantons_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\instantons",
+    "diagnostics_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260223T223952Z\\diagnostics"
+  },
+  "cli_args": {
+    "demo": false,
+    "run_dir": null,
+    "runs_root": "outputs/runs",
+    "run_name": null,
+    "processed_dir": "data/processed",
+    "state_pattern": "state_*.csv",
+    "params_dir": "outputs/params",
+    "params_pattern": "sv_params_*.json",
+    "tdays": null,
+    "delta": null,
+    "n_paths": 5000,
+    "lam": 0.5,
+    "umax": 10.0,
+    "seed": 123,
+    "seed_mode": "per_query",
+    "mam_max_iter": 200,
+    "mam_step0": 0.5,
+    "mam_grad_eps": 0.0001,
+    "refine_radius": 5,
+    "jobs": 6,
+    "chunk_days": null
+  }
+}
