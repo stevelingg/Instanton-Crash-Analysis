@@ -14,32 +14,32 @@ This repository implements the end-to-end pipeline:
 
 ## Forecast target (what we estimate each day)
 
-Let \(P_k\) be daily adjusted close, \(X_k=\log P_k\). Define the running peak and drawdown on the **daily grid**:
+Let $P_k$ be daily adjusted close, $X_k=\log P_k$. Define the running peak and drawdown on the **daily grid**:
 
-- \(M_k = \max_{j\le k} X_j\)
-- \(D_k = M_k - X_k \ge 0\)  (log-drawdown)
-- drawdown fraction: \(\delta_k = 1-e^{-D_k}\)
+- $M_k = \max_{j\le k} X_j$
+- $D_k = M_k - X_k \ge 0$  (log-drawdown)
+- drawdown fraction: $\delta_k = 1-e^{-D_k}$
 
-For a chosen drawdown fraction \(\delta \in (0,1)\), set the **log threshold**
+For a chosen drawdown fraction $\delta \in (0,1)$, set the **log threshold**
 
-\[
- d(\delta) = -\log(1-\delta).
-\]
+$$
+d(\delta) = -\log(1-\delta).
+$$
 
-Given a forecast origin day \(k\) with observed \((X_k,V_k,D_k)=(x_0,v_0,d_0)\) and a horizon of \(T_{\text{days}}=n\) trading days, the forecast is:
+Given a forecast origin day $k$ with observed $(X_k,V_k,D_k)=(x_0,v_0,d_0)$ and a horizon of $T_{\text{days}}=n$ trading days, the forecast is:
 
-\[
- p_k(T_{\text{days}},\delta)
- = \mathbb{P}\!\left(\max_{0\le i \le n} D_{k+i} \ge d(\delta)\ \middle|\ X_k=x_0, V_k=v_0, D_k=d_0\right).
-\]
+$$
+p_k(T_{\text{days}},\delta)
+= \mathbb{P}\!\left(\max_{0\le i \le n} D_{k+i} \ge d(\delta)\ \middle|\ X_k=x_0, V_k=v_0, D_k=d_0\right).
+$$
 
-**Important:** \((X,V)\) are simulated as a **2D Markov diffusion**. Drawdown \(D\) is *not* a third SDE; it is updated deterministically from the simulated \(X\) path using the **exact running-maximum recursion**.
+**Important:** $(X,V)$ are simulated as a **2D Markov diffusion**. Drawdown $D$ is *not* a third SDE; it is updated deterministically from the simulated $X$ path using the **exact running-maximum recursion**.
 
-### The \(\tau^*=0\) (already-hit) regime
+### The $\tau^*=0$ (already-hit) regime
 
-Under the definition \(\max_{0\le i\le n}D_{k+i}\ge d\) (origin included), if \(d_0 \ge d(\delta)\) then the event is already true at the forecast origin and the model returns:
-- \(\hat p = 1\),
-- \(SE = 0\),
+Under the definition $\max_{0\le i\le n}D_{k+i}\ge d$ (origin included), if $d_0 \ge d(\delta)$ then the event is already true at the forecast origin and the model returns:
+- $\hat p = 1$,
+- $SE = 0$,
 - no instanton/IS simulation is needed for that query.
 
 This is expected and consistent with the framework.
@@ -48,7 +48,7 @@ This is expected and consistent with the framework.
 
 ## Repository layout
 
-```
+```text
 Instanton Crash Analysis/
 ├─ data/
 │  ├─ raw/                       # fetched SPY adjusted close etc.
@@ -91,12 +91,12 @@ Instanton Crash Analysis/
 
 Implemented in `src/constants.py`, `src/model_sv.py`, and enforced throughout simulation/instanton/IS:
 
-- **Daily grid:** \(\Delta t = 1/252\) years.
-- **Committed query grid:** \(\delta \in \{0.20, 0.30\}\), \(T_{\text{days}} \in \{20, 60\}\) (overrideable via CLI).
-- **Threshold transform:** \(d(\delta) = -\log(1-\delta)\).
+- **Daily grid:** $\Delta t = 1/252$ years.
+- **Committed query grid:** $\delta \in \{0.20, 0.30\}$, $T_{\text{days}} \in \{20, 60\}$ (overrideable via CLI).
+- **Threshold transform:** $d(\delta) = -\log(1-\delta)$.
 - **Drawdown recursion:** exact running maximum in all simulation/evaluation; smooth surrogate only inside the optimiser.
-- **Effective variance regularisation:** \(v_{\text{eff}} = v_{\min} + \mathrm{softplus}_{\alpha_v}(v-v_{\min})\) used **everywhere** in coefficients/action/simulation.
-- **Importance sampling control:** \(u_i = \mathrm{cap}(\lambda u^*_i)\), with \(u^*_i = 0\) for \(i\ge \tau^*\).
+- **Effective variance regularisation:** $v_{\text{eff}} = v_{\min} + \mathrm{softplus}_{\alpha_v}(v-v_{\min})$ used **everywhere** in coefficients/action/simulation.
+- **Importance sampling control:** $u_i = \mathrm{cap}(\lambda u^*_i)$, with $u^*_i = 0$ for $i\ge \tau^*$.
 - **Likelihood ratio:** exact Gaussian shift on independent Brownian increments.
 
 ---
@@ -191,7 +191,7 @@ python scripts/05_make_figures.py \
 ## Outputs (what to look at)
 
 ### Forecast CSV (per run)
-Each row corresponds to one \((\text{Date}, T_{\text{days}}, \delta)\) query and includes:
+Each row corresponds to one $(\text{Date}, T_{\text{days}}, \delta)$ query and includes:
 - `p_hat`, `se`, `ess`, `mean_weight`, `max_weight`, `hit_rate_Q`
 - instanton diagnostics: `tau_star`, `action`, `prehit_max_violation`, `hit_err`
 - `instanton_file` (cached `.npz` used to reconstruct the IS control)
