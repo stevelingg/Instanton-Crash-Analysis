@@ -37,9 +37,8 @@ def _initial_guess_moments(v: np.ndarray, v1: np.ndarray, r: np.ndarray, dt: flo
     xm, ym = x.mean(), y.mean()
     sxx = np.sum((x - xm) ** 2)
     b = float(np.sum((x - xm) * (y - ym)) / sxx) if sxx > 0 else 0.0
-    a = float(ym - b * xm)
     kappa0 = max(1e-3, -b)
-    vbar0 = max(1e-6, a / kappa0)
+    vbar0 = max(1e-6, a / kappa0) if (a := float(ym - b * xm)) > 0 else 1e-6
 
     # rough xi,rho init from residual correlation
     dB1 = (r - mu0 * dt) / np.sqrt(np.maximum(v_eff, 1e-16))
@@ -70,7 +69,6 @@ def _unpack_unconstrained(theta: np.ndarray, dt: float) -> SVParams:
     vbar = float(np.exp(theta[2]))
     xi = float(np.exp(theta[3]))
     rho = float(np.tanh(theta[4]))
-    # hard clip for numerical stability in likelihood
     rho = float(np.clip(rho, -0.999, 0.999))
     return SVParams(mu=mu, kappa=kappa, vbar=vbar, xi=xi, rho=rho, dt_years=dt)
 
@@ -83,12 +81,9 @@ def _qmle_negloglik(theta: np.ndarray, r: np.ndarray, dv: np.ndarray, v_eff: np.
     p = _unpack_unconstrained(theta, dt=dt)
     mu, kappa, vbar, xi, rho = p.mu, p.kappa, p.vbar, p.xi, p.rho
 
-    # centered innovations
     y1 = r - mu * dt
     y2 = dv - kappa * (vbar - v_eff) * dt
 
-    # Σ_i = v_eff*dt * C,  C = [[1, xi*rho],[xi*rho, xi^2]]
-    # det(C)=xi^2(1-rho^2); C^{-1}=(1/det)*[[xi^2, -xi*rho],[-xi*rho, 1]]
     one_m_r2 = max(1e-12, 1.0 - rho * rho)
     detC = (xi * xi) * one_m_r2
 
@@ -96,13 +91,9 @@ def _qmle_negloglik(theta: np.ndarray, r: np.ndarray, dv: np.ndarray, v_eff: np.
     inv12 = (-xi * rho) / detC
     inv22 = 1.0 / detC
 
-    scale = np.maximum(v_eff * dt, 1e-16)  # v_eff>0 by construction
+    scale = np.maximum(v_eff * dt, 1e-16)
     quad = (inv11 * y1 * y1 + 2.0 * inv12 * y1 * y2 + inv22 * y2 * y2) / scale
-
-    # log det Σ_i = 2 log(scale) + log(detC)
     logdet = 2.0 * np.log(scale) + np.log(detC)
-
-    # NLL up to additive constant
     return float(0.5 * np.sum(logdet + quad))
 
 
@@ -112,9 +103,13 @@ def fit_sv_params_qmle_from_state(
     train_end: Optional[str] = None,
     price_ticker: str = "SPY",
     maxiter: int = 200,
+    require_success: bool = True,
 ) -> Tuple[SVParams, Dict[str, Any]]:
     """
     Step 2 (PDF): QMLE under the matched daily discretisation using returns + variance proxy only.
+
+    By default this is strict: unsuccessful optimisation raises, rather than silently emitting
+    parameters that could contaminate downstream forecasts.
     """
     df = state_df.copy()
     df.index = pd.to_datetime(df.index)
@@ -130,12 +125,14 @@ def fit_sv_params_qmle_from_state(
 
     dt = DT_YEARS
 
-    # Align to scheme: use v_i to model r_{i+1} and dv_i = v_{i+1}-v_i
     v = df["V_proxy"].astype(float)
     v1 = v.shift(-1)
     r1 = df["r"].shift(-1).astype(float)
 
     mask = v.notna() & v1.notna() & r1.notna()
+    if not bool(mask.any()):
+        raise RuntimeError("No valid (v_i, v_{i+1}, r_{i+1}) observations available for QMLE fit.")
+
     v = v.loc[mask].to_numpy(dtype=float)
     v1 = v1.loc[mask].to_numpy(dtype=float)
     r = r1.loc[mask].to_numpy(dtype=float)
@@ -143,7 +140,6 @@ def fit_sv_params_qmle_from_state(
     dv = v1 - v
     v_eff = effective_variance(v)
 
-    # initial guess via moments (for optimiser only)
     p0 = _initial_guess_moments(v=v, v1=v1, r=r, dt=dt)
     x0 = _pack_unconstrained(p0)
 
@@ -154,9 +150,9 @@ def fit_sv_params_qmle_from_state(
         method="L-BFGS-B",
         options={"maxiter": maxiter},
     )
+
     p_hat = _unpack_unconstrained(res.x, dt=dt)
 
-    # diagnostics: build implied standardized independent normals
     mu, kappa, vbar, xi, rho = p_hat.mu, p_hat.kappa, p_hat.vbar, p_hat.xi, p_hat.rho
     y1 = r - mu * dt
     y2 = dv - kappa * (vbar - v_eff) * dt
@@ -164,12 +160,20 @@ def fit_sv_params_qmle_from_state(
     eps1 = y1 / np.sqrt(np.maximum(v_eff * dt, 1e-16))
     eps2 = (y2 / (xi * np.sqrt(np.maximum(v_eff * dt, 1e-16))) - rho * eps1) / np.sqrt(max(1e-12, 1.0 - rho * rho))
 
+    nll = _qmle_negloglik(res.x, r, dv, v_eff, dt)
     diag: Dict[str, Any] = {
         "ticker": price_ticker,
         "train_start": str(df.index[mask][0].date()),
         "train_end": str(df.index[mask][-1].date()),
         "n_steps": int(mask.sum()),
-        "optimiser": {"success": bool(res.success), "status": int(res.status), "message": str(res.message), "nfev": int(res.nfev)},
+        "negloglik": float(nll),
+        "optimiser": {
+            "success": bool(res.success),
+            "status": int(res.status),
+            "message": str(res.message),
+            "nfev": int(res.nfev),
+            "nit": int(getattr(res, "nit", -1)),
+        },
         "moments": {
             "eps1_mean": float(np.mean(eps1)),
             "eps1_var": float(np.var(eps1, ddof=1)),
@@ -178,6 +182,17 @@ def fit_sv_params_qmle_from_state(
             "corr_eps1_raw_y2": float(np.corrcoef(eps1, y2)[0, 1]),
         },
     }
+
+    if require_success and not res.success:
+        raise RuntimeError(
+            "SV QMLE optimisation failed; refusing to emit parameters for downstream forecasting. "
+            f"status={res.status}, message={res.message!s}"
+        )
+
+    vals = np.array([p_hat.mu, p_hat.kappa, p_hat.vbar, p_hat.xi, p_hat.rho], dtype=float)
+    if not np.all(np.isfinite(vals)):
+        raise RuntimeError(f"SV QMLE produced non-finite parameter values: {vals}")
+
     return p_hat, diag
 
 

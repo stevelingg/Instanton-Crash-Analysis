@@ -10,7 +10,6 @@ import math
 import os
 import sys
 
-# --- Prevent BLAS/OpenMP oversubscription in multiprocess runs ---
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
@@ -22,7 +21,6 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
-# Allow running as: python scripts/03_daily_forecast.py ...
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -36,30 +34,27 @@ from src.constants import (
     log_drawdown_threshold,
 )
 from src.fit import SVParams
-from src.io import (ensure_dir, save_json,    
-                    load_latest_params_with_path,
-                    load_latest_state_with_path,
-                    make_state_tasks,)
+from src.io import (
+    ensure_dir,
+    save_json,
+    resolve_input_file,
+    read_state_csv,
+    load_params_json,
+    make_state_tasks,
+    file_fingerprint,
+)
 from src.instanton import select_instanton_tau_star, InstantonSolution, MAMSettings
 from src.importance_sampling import cap_control, simulate_is_paths, estimate_probability_is
 
 
 def _stable_query_seed(base_seed: int, date_str: str, tdays: int, delta: float) -> int:
-    """
-    Deterministic per-query seed (stable across processes/chunking).
-    """
     payload = f"{int(base_seed)}|{date_str}|{int(tdays)}|{float(delta):.12g}".encode("utf-8")
-    # 64-bit digest then fold to uint32-range accepted by numpy generators
     h = hashlib.blake2b(payload, digest_size=8).digest()
     seed64 = int.from_bytes(h, "little", signed=False)
     return int(seed64 % (2**32 - 1))
 
 
 def save_instanton_npz(out_dir: Path, date: str, tdays: int, delta: float, sol: InstantonSolution) -> Path:
-    """
-    Save cached instanton path in the run-scoped instantons directory.
-    """
-    # Within a run, date/T/delta is unique; tau/alpha are included for readability.
     fname = f"instanton_{date}_T{tdays}_delta{delta:.2f}_tau{sol.tau}_am{int(sol.alpha_m)}.npz"
     f = out_dir / fname
     np.savez_compressed(
@@ -93,10 +88,6 @@ def _run_block(
     mam_settings: MAMSettings,
     instantons_dir: Path,
 ) -> list[dict]:
-    """
-    Worker: process a contiguous block of dates sequentially so warm-start caching
-    still works within the block.
-    """
     rows: list[dict] = []
     warm_cache: dict[tuple[int, float], InstantonSolution] = {}
 
@@ -105,7 +96,6 @@ def _run_block(
             for delta in delta_grid:
                 d = float(log_drawdown_threshold(float(delta)))
 
-                # PDF regime: if d0 >= d then tau_d=0 and event is already true at origin => p=1.
                 if float(d0) >= float(d):
                     rows.append(
                         {
@@ -217,37 +207,45 @@ def main() -> None:
 
     ap.add_argument("--demo", action=argparse.BooleanOptionalAction, default=False)
 
-    # --- Run directory layout (preferred) ---
     ap.add_argument("--run_dir", type=str, default=None, help="Explicit run directory. If omitted, created under --runs_root.")
     ap.add_argument("--runs_root", type=str, default="outputs/runs", help="Parent directory for generated run folders.")
     ap.add_argument("--run_name", type=str, default=None, help="Optional custom run folder name.")
 
-    # Inputs
     ap.add_argument("--processed_dir", type=str, default="data/processed")
+    ap.add_argument("--state_csv", type=str, default=None, help="Explicit state CSV path. Preferred for reproducibility.")
     ap.add_argument("--state_pattern", type=str, default="state_*.csv")
     ap.add_argument("--params_dir", type=str, default="outputs/params")
+    ap.add_argument("--params_json", type=str, default=None, help="Explicit params JSON path. Preferred for reproducibility.")
     ap.add_argument("--params_pattern", type=str, default="sv_params_*.json")
+    ap.add_argument("--allow_latest_inputs", action="store_true", help="Allow newest matching state/params files when patterns are ambiguous.")
 
-    # Query grid overrides
     ap.add_argument("--tdays", type=int, default=None)
     ap.add_argument("--delta", type=float, default=None)
 
-    # IS settings
     ap.add_argument("--n_paths", type=int, default=5000)
     ap.add_argument("--lam", type=float, default=LAMBDA_IS)
     ap.add_argument("--umax", type=float, default=UMAX)
     ap.add_argument("--seed", type=int, default=123)
     ap.add_argument("--seed_mode", type=str, default="per_query", choices=["fixed", "per_query"])
 
-    # MAM settings
     ap.add_argument("--mam_max_iter", type=int, default=200)
-    ap.add_argument("--mam_step0", type=float, default=0.5)      # kept for compatibility (passed through to settings)
-    ap.add_argument("--mam_grad_eps", type=float, default=1e-4)   # kept for compatibility (passed through to settings)
+    ap.add_argument("--mam_step0", type=float, default=0.5)
+    ap.add_argument("--mam_grad_eps", type=float, default=1e-4)
     ap.add_argument("--refine_radius", type=int, default=5)
 
-    # Parallel execution
     ap.add_argument("--jobs", type=int, default=1, help="Number of worker processes. 1 = sequential.")
     ap.add_argument("--chunk_days", type=int, default=None, help="Contiguous days per worker block (default: auto).")
+    ap.add_argument(
+        "--allow_parallel_nondeterminism",
+        action="store_true",
+        help="Allow jobs>1 even though warm-start differences across blocks can change results.",
+    )
+
+    ap.add_argument(
+        "--skip_diagnostics_dir",
+        action="store_true",
+        help="Do not create the diagnostics/ directory in the run folder (forecast CSV + instantons only).",
+    )
 
     args = ap.parse_args()
 
@@ -258,9 +256,12 @@ def main() -> None:
     )
     log = logging.getLogger(__name__)
 
-    # -----------------
-    # FORCED WINDOW
-    # -----------------
+    if int(args.jobs) > 1 and not bool(args.allow_parallel_nondeterminism):
+        raise RuntimeError(
+            "jobs>1 is disabled by default for publishable runs because block-local warm starts can change the selected instanton. "
+            "Re-run with --allow_parallel_nondeterminism only if you explicitly accept that risk."
+        )
+
     start = pd.to_datetime("2007-01-01")
     end = pd.to_datetime("2008-10-31")
 
@@ -275,10 +276,27 @@ def main() -> None:
 
     forecasts_dir = ensure_dir(run_dir / "forecasts")
     instantons_dir = ensure_dir(run_dir / "instantons")
-    diagnostics_dir = ensure_dir(run_dir / "diagnostics")  # reserved for script 04 outputs
+    diagnostics_dir = run_dir / "diagnostics"
+    if not bool(args.skip_diagnostics_dir):
+        diagnostics_dir = ensure_dir(diagnostics_dir)
 
-    state_full, state_path = load_latest_state_with_path(Path(args.processed_dir), pattern=str(args.state_pattern))
-    params, params_path = load_latest_params_with_path(Path(args.params_dir), pattern=str(args.params_pattern))
+    state_path = resolve_input_file(
+        explicit_path=args.state_csv,
+        directory=Path(args.processed_dir),
+        pattern=str(args.state_pattern),
+        allow_latest=bool(args.allow_latest_inputs),
+        purpose="state input",
+    )
+    params_path = resolve_input_file(
+        explicit_path=args.params_json,
+        directory=Path(args.params_dir),
+        pattern=str(args.params_pattern),
+        allow_latest=bool(args.allow_latest_inputs),
+        purpose="parameter input",
+    )
+
+    state_full = read_state_csv(state_path)
+    params = load_params_json(params_path)
 
     tdays_grid = (int(args.tdays),) if args.tdays is not None else tuple(int(x) for x in TDAYS_GRID)
     delta_grid = (float(args.delta),) if args.delta is not None else tuple(float(x) for x in DELTA_GRID)
@@ -310,9 +328,8 @@ def main() -> None:
         str(args.seed_mode),
     )
     log.info("Run directory: %s", run_dir.resolve())
-
-    if int(args.jobs) > 1:
-        log.info("Parallel note: warm-starts apply within each contiguous block; cross-block warm-start is not guaranteed.")
+    log.info("State input: %s", state_path.resolve())
+    log.info("Params input: %s", params_path.resolve())
 
     t0 = perf_counter()
     rows: list[dict] = []
@@ -372,6 +389,8 @@ def main() -> None:
     out_meta = out_csv.with_name(out_csv.stem + "_metadata.json")
     forecasts_df.to_csv(out_csv, index=False)
 
+    state_fp = file_fingerprint(state_path)
+    params_fp = file_fingerprint(params_path)
     meta_forecasts = {
         "run_type": run_type,
         "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -379,6 +398,10 @@ def main() -> None:
         "inputs": {
             "state_source_csv": str(state_path.resolve()),
             "params_json": str(params_path.resolve()),
+        },
+        "input_fingerprints": {
+            "state": state_fp,
+            "params": params_fp,
         },
         "params": asdict(params),
         "window": {"start": start.strftime("%Y-%m-%d"), "end": end.strftime("%Y-%m-%d")},
@@ -396,7 +419,11 @@ def main() -> None:
             "seed_mode": str(args.seed_mode),
         },
         "mam": {"max_iter": int(args.mam_max_iter), "refine_radius": int(args.refine_radius)},
-        "parallel": {"jobs": int(args.jobs), "chunk_days": int(args.chunk_days) if args.chunk_days is not None else None},
+        "parallel": {
+            "jobs": int(args.jobs),
+            "chunk_days": int(args.chunk_days) if args.chunk_days is not None else None,
+            "allow_parallel_nondeterminism": bool(args.allow_parallel_nondeterminism),
+        },
         "outputs": {
             "forecasts_csv": str(out_csv.resolve()),
             "forecasts_meta": str(out_meta.resolve()),

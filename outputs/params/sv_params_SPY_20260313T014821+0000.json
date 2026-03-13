@@ -1,0 +1,51 @@
+{
+  "built_at_utc": "2026-03-13T01:48:21+00:00",
+  "state_source_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+  "state_source_fingerprint": {
+    "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+    "sha256": "d68503e36f57f7eccdab8ddf87ba8267140fc306249faea0dd560a55c68c85a8",
+    "size_bytes": 331128,
+    "mtime_ns": 1773366496077360300
+  },
+  "params": {
+    "mu": 0.07014296668073237,
+    "kappa": 1.2048579546956792,
+    "vbar": 0.028718134599679843,
+    "xi": 0.22102276691751915,
+    "rho": 0.010260227646612828,
+    "dt_years": 0.003968253968253968
+  },
+  "diagnostics": {
+    "ticker": "SPY",
+    "train_start": "2002-01-31",
+    "train_end": "2006-12-28",
+    "n_steps": 1238,
+    "negloglik": -12137.994585815655,
+    "optimiser": {
+      "success": true,
+      "status": 0,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "nfev": 138,
+      "nit": 19
+    },
+    "moments": {
+      "eps1_mean": -0.0020350714602914368,
+      "eps1_var": 0.681502575084938,
+      "eps2_mean": 0.00047574146091594203,
+      "eps2_var": 1.0008161798329476,
+      "corr_eps1_raw_y2": 0.0256169541336093
+    }
+  },
+  "cli_args": {
+    "processed_dir": "data/processed",
+    "state_csv": null,
+    "allow_latest_state": false,
+    "outputs_dir": "outputs/params",
+    "pattern": "state_*.csv",
+    "ticker": "SPY",
+    "train_start": null,
+    "train_end": "2006-12-31",
+    "maxiter": 200,
+    "allow_failed_fit": false
+  }
+}

@@ -7,13 +7,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.io import ensure_dir, find_latest_file
+from src.io import ensure_dir, resolve_input_file, file_fingerprint
 from src.data_state import StateBuildSpec, build_state_frame
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw_dir", type=str, default="data/raw")
+    ap.add_argument("--raw_csv", type=str, default=None, help="Explicit raw CSV path. Preferred for reproducibility.")
+    ap.add_argument("--allow_latest_raw", action="store_true", help="Allow newest matching raw file when pattern is ambiguous.")
     ap.add_argument("--processed_dir", type=str, default="data/processed")
     ap.add_argument("--ticker", type=str, default="SPY")
     ap.add_argument("--pattern", type=str, default=None, help="Override raw filename glob.")
@@ -26,7 +28,13 @@ def main() -> None:
     processed_dir = ensure_dir(args.processed_dir)
 
     pattern = args.pattern or f"{args.ticker}_yahoo_*.csv"
-    raw_path = find_latest_file(raw_dir, pattern)
+    raw_path = resolve_input_file(
+        explicit_path=args.raw_csv,
+        directory=raw_dir,
+        pattern=pattern,
+        allow_latest=bool(args.allow_latest_raw),
+        purpose="raw state input",
+    )
 
     raw = pd.read_csv(raw_path)
     spec = StateBuildSpec(
@@ -45,6 +53,7 @@ def main() -> None:
     meta_full = {
         "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "raw_source_csv": str(raw_path.resolve()),
+        "raw_source_fingerprint": file_fingerprint(raw_path),
         "rows": int(state_df.shape[0]),
         "cols": list(state_df.columns),
         "build_spec": {
@@ -54,6 +63,7 @@ def main() -> None:
             "min_periods": spec.min_periods if spec.min_periods is not None else spec.rv_window_days,
         },
         "meta": meta,
+        "cli_args": vars(args),
     }
     out_meta.write_text(json.dumps(meta_full, indent=2), encoding="utf-8")
 

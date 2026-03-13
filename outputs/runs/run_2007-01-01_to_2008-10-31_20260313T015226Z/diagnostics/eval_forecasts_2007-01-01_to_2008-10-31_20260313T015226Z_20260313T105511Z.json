@@ -1,0 +1,300 @@
+{
+  "built_at_utc": "2026-03-13T10:55:25+00:00",
+  "scores_full": {
+    "n": 1852,
+    "mean_log_score": 0.22616827781785753,
+    "mean_brier": 0.0722835293103332
+  },
+  "scores_prehit": {
+    "n": 1738,
+    "mean_log_score": 0.24100325116142593,
+    "mean_brier": 0.07702479648028603
+  },
+  "baseline_full": {
+    "n": 1852,
+    "p_const": 0.183585313174946,
+    "mean_log_score": 0.4767867457797955,
+    "mean_brier": 0.149881745961403
+  },
+  "baseline_prehit": {
+    "n": 1738,
+    "p_const": 0.13003452243958574,
+    "mean_log_score": 0.38645232675420516,
+    "mean_brier": 0.1131255454134946
+  },
+  "model_vs_baseline_full": {
+    "mean_log_score_improvement": 0.250618467961938,
+    "mean_brier_improvement": 0.07759821665106979
+  },
+  "model_vs_baseline_prehit": {
+    "mean_log_score_improvement": 0.14544907559277923,
+    "mean_brier_improvement": 0.03610074893320857
+  },
+  "scores_full_by_query": [
+    {
+      "Tdays": 20,
+      "delta": 0.2,
+      "n": 463,
+      "mean_log_score": 0.16943353023307686,
+      "mean_brier": 0.05615162272477156
+    },
+    {
+      "Tdays": 20,
+      "delta": 0.3,
+      "n": 463,
+      "mean_log_score": 0.09436522793962687,
+      "mean_brier": 0.02682338453520577
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.2,
+      "n": 463,
+      "mean_log_score": 0.35527252946105303,
+      "mean_brier": 0.11457698476226368
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.3,
+      "n": 463,
+      "mean_log_score": 0.2856018236376732,
+      "mean_brier": 0.09158212521909183
+    }
+  ],
+  "scores_prehit_by_query": [
+    {
+      "Tdays": 20,
+      "delta": 0.2,
+      "n": 426,
+      "mean_log_score": 0.18414958802318696,
+      "mean_brier": 0.061028641599927776
+    },
+    {
+      "Tdays": 20,
+      "delta": 0.3,
+      "n": 443,
+      "mean_log_score": 0.09862550911067096,
+      "mean_brier": 0.02803437255033922
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.2,
+      "n": 426,
+      "mean_log_score": 0.38612953319349913,
+      "mean_brier": 0.1245285069129767
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.3,
+      "n": 443,
+      "mean_log_score": 0.29849581116077367,
+      "mean_brier": 0.09571675841182735
+    }
+  ],
+  "baseline_full_by_query": [
+    {
+      "Tdays": 20,
+      "delta": 0.2,
+      "n": 463,
+      "p_const": 0.17494600431965443,
+      "mean_log_score": 0.4636427041592808,
+      "mean_brier": 0.1443398998922419
+    },
+    {
+      "Tdays": 20,
+      "delta": 0.3,
+      "n": 463,
+      "p_const": 0.08639308855291576,
+      "mean_log_score": 0.29411234587644347,
+      "mean_brier": 0.07892932280320382
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.2,
+      "n": 463,
+      "p_const": 0.3002159827213823,
+      "mean_log_score": 0.6110471926998823,
+      "mean_brier": 0.21008634644001695
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.3,
+      "n": 463,
+      "p_const": 0.17278617710583152,
+      "mean_log_score": 0.46027666179660587,
+      "mean_brier": 0.14293111410698378
+    }
+  ],
+  "baseline_prehit_by_query": [
+    {
+      "Tdays": 20,
+      "delta": 0.2,
+      "n": 426,
+      "p_const": 0.10328638497652583,
+      "mean_log_score": 0.33224447213764463,
+      "mean_brier": 0.09261830765500673
+    },
+    {
+      "Tdays": 20,
+      "delta": 0.3,
+      "n": 443,
+      "p_const": 0.045146726862302484,
+      "mean_log_score": 0.18396914429422048,
+      "mean_brier": 0.04310849991592314
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.2,
+      "n": 426,
+      "p_const": 0.23943661971830985,
+      "mean_log_score": 0.5504296606550267,
+      "mean_brier": 0.18210672485617932
+    },
+    {
+      "Tdays": 60,
+      "delta": 0.3,
+      "n": 443,
+      "p_const": 0.13544018058690746,
+      "mean_log_score": 0.39659894704397647,
+      "mean_brier": 0.1170961380694933
+    }
+  ],
+  "inputs": {
+    "forecasts_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260313T015226Z.csv",
+    "state_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+    "params_json": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260313T014821+0000.json",
+    "instantons_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\instantons"
+  },
+  "input_fingerprints": {
+    "forecasts": {
+      "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260313T015226Z.csv",
+      "sha256": "c5b3f2d49fc2b74aff588e27a3a141af7aa049e5fafaacd5804ee330af54448e",
+      "size_bytes": 579884,
+      "mtime_ns": 1773374664096641100
+    },
+    "state": {
+      "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+      "sha256": "d68503e36f57f7eccdab8ddf87ba8267140fc306249faea0dd560a55c68c85a8",
+      "size_bytes": 331128,
+      "mtime_ns": 1773366496077360300
+    },
+    "params": {
+      "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260313T014821+0000.json",
+      "sha256": "fc7ef3d7d1c6e331adf93aaaa906742e970915517fe882dcbc26d05eb6826f6b",
+      "size_bytes": 1651,
+      "mtime_ns": 1773366501535434600
+    }
+  },
+  "forecast_metadata_detected": true,
+  "window_eval": {
+    "start": "2007-01-01",
+    "end": "2008-10-31"
+  },
+  "sample_counts": {
+    "rows_full": 1852,
+    "rows_with_realised_label_full": 1852,
+    "rows_prehit": 1738,
+    "rows_with_realised_label_prehit": 1738
+  },
+  "reliability_bins": 10,
+  "bootstrap": {
+    "reps": 200,
+    "seed": 2026,
+    "method": "moving_block_by_date",
+    "block_days": 60
+  },
+  "ordering_checks": {
+    "sigma_threshold": 3.0,
+    "full_summary": {
+      "n_checks": 1852,
+      "raw_violations": 0,
+      "sigma_violations": 0,
+      "max_negative_gap": 0.0,
+      "min_z": 1.0
+    },
+    "prehit_summary": {
+      "n_checks": 1721,
+      "raw_violations": 0,
+      "sigma_violations": 0,
+      "max_negative_gap": 8.029855745738993e-10,
+      "min_z": 1.0
+    },
+    "outputs": {
+      "ordering_full_csv": "ordering_full_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+      "ordering_prehit_csv": "ordering_prehit_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv"
+    }
+  },
+  "outputs": {
+    "eval_joined_csv": "eval_joined_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "scores_full_by_group_csv": "scores_full_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "scores_prehit_by_group_csv": "scores_prehit_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "baseline_full_by_group_csv": "baseline_full_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "baseline_prehit_by_group_csv": "baseline_prehit_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "score_comparison_full_by_group_csv": "score_comparison_full_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "score_comparison_prehit_by_group_csv": "score_comparison_prehit_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "reliability_full_csv": "reliability_full_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "reliability_prehit_csv": "reliability_prehit_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "calibration_full_csv": "calibration_full_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "calibration_prehit_csv": "calibration_prehit_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "is_diagnostics_full_csv": "is_diagnostics_full_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "is_diagnostics_prehit_csv": "is_diagnostics_prehit_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "bootstrap_scores_full_overall_csv": "bootstrap_scores_full_overall_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "bootstrap_scores_full_by_group_csv": "bootstrap_scores_full_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "bootstrap_scores_prehit_overall_csv": "bootstrap_scores_prehit_overall_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "bootstrap_scores_prehit_by_group_csv": "bootstrap_scores_prehit_by_group_forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_20260313T105511Z.csv",
+    "plots": {
+      "files": [
+        "reliability_all_groups.png"
+      ],
+      "groups": {
+        "delta0.20": [
+          "reliability_delta0.20.png",
+          "forecast_delta0.20.png",
+          "ess_delta0.20.png",
+          "weights_delta0.20.png"
+        ],
+        "delta0.30": [
+          "reliability_delta0.30.png",
+          "forecast_delta0.30.png",
+          "ess_delta0.30.png",
+          "weights_delta0.30.png"
+        ]
+      }
+    }
+  },
+  "naive_mc_checks": null,
+  "cli_args": {
+    "run_dir": null,
+    "forecasts_csv": null,
+    "forecasts_dir": "outputs/forecasts",
+    "forecasts_pattern": "*forecasts_*.csv",
+    "state_csv": null,
+    "state_dir": "data/processed",
+    "state_pattern": "state_*.csv",
+    "params_json": null,
+    "params_dir": "outputs/params",
+    "params_pattern": "sv_params_*.json",
+    "instantons_dir": null,
+    "out_dir": null,
+    "allow_latest_inputs": false,
+    "reliability_bins": 10,
+    "bootstrap_reps": 200,
+    "bootstrap_seed": 2026,
+    "bootstrap_block_days": null,
+    "make_plots": true,
+    "plot_max_groups": 12,
+    "run_naive_checks": false,
+    "naive_check_mode": "stratified",
+    "naive_prob_bands": "0.01,0.03,0.05,0.10,0.20,0.30,0.50",
+    "p_lo": 0.01,
+    "p_hi": 0.5,
+    "naive_min_expected_hits": 20.0,
+    "naive_max_total": 200,
+    "naive_max_per_stratum": 5,
+    "naive_n": 20000,
+    "is_n": 5000,
+    "seed_is": 11,
+    "seed_mc": 23,
+    "strict_ordering": false,
+    "ordering_sigma_threshold": 3.0
+  }
+}

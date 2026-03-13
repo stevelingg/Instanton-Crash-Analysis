@@ -1,0 +1,50 @@
+{
+  "built_at_utc": "2026-03-13T01:48:16+00:00",
+  "raw_source_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\raw\\SPY_yahoo_2002-01-01_to_2010-12-31_20260313T014804+0000.csv",
+  "raw_source_fingerprint": {
+    "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\raw\\SPY_yahoo_2002-01-01_to_2010-12-31_20260313T014804+0000.csv",
+    "sha256": "1ed70823bc73f8e2c8ef4675aa0fd6908e7b66e7db5824b13b80686380310bef",
+    "size_bytes": 368639,
+    "mtime_ns": 1773366486141936800
+  },
+  "rows": 2267,
+  "cols": [
+    "P",
+    "X",
+    "r",
+    "M",
+    "D",
+    "delta",
+    "V_proxy"
+  ],
+  "build_spec": {
+    "price_col": "Adj Close",
+    "rv_window_days": 20,
+    "annualisation": 252,
+    "min_periods": 20
+  },
+  "meta": {
+    "price_col_used": "Adj Close",
+    "rv_window_days": 20,
+    "annualisation": 252,
+    "min_periods": 20,
+    "notes": {
+      "X": "X_k = log P_k (daily adjusted close by default)",
+      "r": "r_k = X_k - X_{k-1}",
+      "M_D": "M_k = max_{j<=k} X_j; D_k = M_k - X_k (exact daily-grid drawdown)",
+      "delta": "delta_k = 1 - exp(-D_k)",
+      "V_proxy": "rolling realised variance proxy, annualised"
+    }
+  },
+  "cli_args": {
+    "raw_dir": "data/raw",
+    "raw_csv": null,
+    "allow_latest_raw": false,
+    "processed_dir": "data/processed",
+    "ticker": "SPY",
+    "pattern": null,
+    "price_col": "Adj Close",
+    "rv_window_days": 20,
+    "min_periods": null
+  }
+}

@@ -5,6 +5,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+settings.json
 
 # data and outputs (optional)
 # /data/

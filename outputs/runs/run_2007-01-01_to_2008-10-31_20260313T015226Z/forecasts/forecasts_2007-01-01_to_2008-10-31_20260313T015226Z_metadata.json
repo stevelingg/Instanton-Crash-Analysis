@@ -1,0 +1,100 @@
+{
+  "run_type": "run",
+  "built_at_utc": "2026-03-13T04:04:24+00:00",
+  "run_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z",
+  "inputs": {
+    "state_source_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+    "params_json": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260313T014821+0000.json"
+  },
+  "input_fingerprints": {
+    "state": {
+      "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\data\\processed\\state_SPY_20260313T014816+0000.csv",
+      "sha256": "d68503e36f57f7eccdab8ddf87ba8267140fc306249faea0dd560a55c68c85a8",
+      "size_bytes": 331128,
+      "mtime_ns": 1773366496077360300
+    },
+    "params": {
+      "path": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\params\\sv_params_SPY_20260313T014821+0000.json",
+      "sha256": "fc7ef3d7d1c6e331adf93aaaa906742e970915517fe882dcbc26d05eb6826f6b",
+      "size_bytes": 1651,
+      "mtime_ns": 1773366501535434600
+    }
+  },
+  "params": {
+    "mu": 0.07014296668073237,
+    "kappa": 1.2048579546956792,
+    "vbar": 0.028718134599679843,
+    "xi": 0.22102276691751915,
+    "rho": 0.010260227646612828,
+    "dt_years": 0.003968253968253968
+  },
+  "window": {
+    "start": "2007-01-01",
+    "end": "2008-10-31"
+  },
+  "grid": {
+    "tdays": [
+      20,
+      60
+    ],
+    "delta": [
+      0.2,
+      0.3
+    ]
+  },
+  "framework": {
+    "forward_looking_excludes_origin": false,
+    "tau0_regime": "if d0 >= d then tau_d=0 and event already true at origin => p_hat=1 (no instanton/IS needed)",
+    "HIT_EPS": 0.0001
+  },
+  "is": {
+    "N": 5000,
+    "lam": 0.5,
+    "umax": 10.0,
+    "seed_base": 123,
+    "seed_mode": "per_query"
+  },
+  "mam": {
+    "max_iter": 200,
+    "refine_radius": 5
+  },
+  "parallel": {
+    "jobs": 1,
+    "chunk_days": null,
+    "allow_parallel_nondeterminism": false
+  },
+  "outputs": {
+    "forecasts_csv": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260313T015226Z.csv",
+    "forecasts_meta": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\forecasts\\forecasts_2007-01-01_to_2008-10-31_20260313T015226Z_metadata.json",
+    "instantons_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\instantons",
+    "diagnostics_dir": "C:\\Users\\SL407\\OneDrive\\Desktop\\Instanton Crash Analysis\\outputs\\runs\\run_2007-01-01_to_2008-10-31_20260313T015226Z\\diagnostics"
+  },
+  "cli_args": {
+    "demo": false,
+    "run_dir": null,
+    "runs_root": "outputs/runs",
+    "run_name": null,
+    "processed_dir": "data/processed",
+    "state_csv": null,
+    "state_pattern": "state_*.csv",
+    "params_dir": "outputs/params",
+    "params_json": null,
+    "params_pattern": "sv_params_*.json",
+    "allow_latest_inputs": false,
+    "tdays": null,
+    "delta": null,
+    "n_paths": 5000,
+    "lam": 0.5,
+    "umax": 10.0,
+    "seed": 123,
+    "seed_mode": "per_query",
+    "mam_max_iter": 200,
+    "mam_step0": 0.5,
+    "mam_grad_eps": 0.0001,
+    "refine_radius": 5,
+    "jobs": 1,
+    "chunk_days": null,
+    "allow_parallel_nondeterminism": false,
+    "skip_diagnostics_dir": true
+  }
+}

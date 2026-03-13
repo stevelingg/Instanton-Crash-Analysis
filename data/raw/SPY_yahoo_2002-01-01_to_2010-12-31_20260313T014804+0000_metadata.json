@@ -1,0 +1,21 @@
+{
+  "ticker": "SPY",
+  "provider": "Yahoo Finance",
+  "access_method": "Downloaded via yfinance (Python)",
+  "yfinance_version": "1.2.0",
+  "retrieved_at_utc": "2026-03-13T01:48:04+00:00",
+  "start_date": "2002-01-01",
+  "end_date_inclusive_requested": "2010-12-31",
+  "provider_end_exclusive_used": "2011-01-01",
+  "interval": "1d",
+  "fields_expected": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume",
+    "Dividends",
+    "Stock Splits"
+  ]
+}

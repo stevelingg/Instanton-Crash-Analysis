@@ -568,6 +568,19 @@ def tau_coarse_grid(n_steps: int) -> List[int]:
     return [10, 20, 30, 40, 50, n_steps]
 
 
+def _is_exact_admissible_candidate(sol: InstantonSolution, d: float, settings: MAMSettings) -> bool:
+    """
+    A candidate is admissible only if:
+      1) the exact drawdown at tau reaches the true threshold up to exact_tol,
+      2) the surrogate hit equality is numerically tight,
+      3) the pre-hit constraint violation stays within the operational tolerance.
+    """
+    exact_ok = np.isfinite(sol.dexact_tau) and (float(sol.dexact_tau) >= float(d) - float(settings.exact_tol))
+    hit_ok = np.isfinite(sol.hit_err) and (abs(float(sol.hit_err)) <= 1e-6)
+    prehit_ok = np.isfinite(sol.prehit_max_violation) and (float(sol.prehit_max_violation) <= float(settings.pre_eps))
+    return bool(exact_ok and hit_ok and prehit_ok)
+
+
 def select_instanton_tau_star(
     params: SVParams,
     x0: float,
@@ -575,21 +588,31 @@ def select_instanton_tau_star(
     d0: float,
     d: float,
     n_steps: int,
-    refine_radius: int = 5,
+    refine_radius: int = 5,  # retained for API compatibility; unused now
     settings: Optional[MAMSettings] = None,
     warm_start: Optional[InstantonSolution] = None,
 ) -> InstantonSolution:
     """
-    Minimise over discrete hitting day τ ∈ {1,...,n} using coarse-to-fine search + warm-starts.
+    Minimise over ALL discrete hitting days tau in {1,...,n_steps}.
 
-    Change (per PDF operational guidance):
-      - If warm_start is provided (e.g., yesterday's best solution), use it for ALL candidate τ values.
-        solve_tau_with_alpha_continuation will resample it to the requested τ via _resample_warm_start.
+    This is the literal Section 6.3 rule:
+      - solve the fixed-time problem for each candidate tau,
+      - reject candidates that do not produce an admissible exact hit,
+      - choose the admissible tau with minimum action.
+
+    Notes:
+      - If d0 >= d, the event is already true at the origin and tau*=0.
+      - The search is now exhaustive, not coarse-to-fine.
+      - We still use warm-start continuation across neighbouring tau values
+        for speed, but every tau is solved and checked.
     """
     if settings is None:
         settings = MAMSettings()
 
-    # PDF regime check: if d0 >= d, first-hitting instanton constraint is infeasible as stated.
+    if n_steps <= 0:
+        raise ValueError("n_steps must be positive.")
+
+    # Event already true at origin.
     if float(d0) >= float(d):
         return InstantonSolution(
             tau=0,
@@ -605,10 +628,13 @@ def select_instanton_tau_star(
         )
 
     sols: Dict[int, InstantonSolution] = {}
-    coarse = [t for t in tau_coarse_grid(n_steps) if 1 <= t <= n_steps]
+    admissible: Dict[int, InstantonSolution] = {}
 
-    for tau in coarse:
-        sols[tau] = solve_tau_with_alpha_continuation(
+    # Sequential exhaustive sweep. Each tau gets solved; neighbour warm-starting
+    # improves convergence but does not change the fact that every tau is considered.
+    ws = warm_start
+    for tau in range(1, int(n_steps) + 1):
+        sol = solve_tau_with_alpha_continuation(
             params=params,
             x0=x0,
             v0=v0,
@@ -616,25 +642,26 @@ def select_instanton_tau_star(
             d=d,
             tau=tau,
             settings=settings,
-            warm_start=warm_start,
+            warm_start=ws,
+        )
+        sols[tau] = sol
+        if _is_exact_admissible_candidate(sol, d=d, settings=settings):
+            admissible[tau] = sol
+        ws = sol
+
+    if not admissible:
+        # Fail loudly with useful diagnostics.
+        best_tau = min(sols.keys(), key=lambda t: sols[t].action)
+        best_sol = sols[best_tau]
+        shortfall = float(d - best_sol.dexact_tau)
+        raise RuntimeError(
+            "No admissible exact-hitting instanton candidate was found over tau=1..n_steps. "
+            f"Best-action candidate tau={best_tau} had action={best_sol.action:.12g}, "
+            f"dexact_tau={best_sol.dexact_tau:.12g}, threshold={float(d):.12g}, "
+            f"exact_shortfall={shortfall:.12g}, "
+            f"prehit_max_violation={best_sol.prehit_max_violation:.12g}, "
+            f"hit_err={best_sol.hit_err:.12g}."
         )
 
-    best_tau = min(sols.keys(), key=lambda t: sols[t].action)
-    lo = max(1, best_tau - refine_radius)
-    hi = min(n_steps, best_tau + refine_radius)
-
-    for tau in range(lo, hi + 1):
-        if tau in sols:
-            continue
-        sols[tau] = solve_tau_with_alpha_continuation(
-            params=params,
-            x0=x0,
-            v0=v0,
-            d0=d0,
-            d=d,
-            tau=tau,
-            settings=settings,
-            warm_start=warm_start,
-        )
-
-    return sols[min(sols.keys(), key=lambda t: sols[t].action)]
+    tau_star = min(admissible.keys(), key=lambda t: admissible[t].action)
+    return admissible[tau_star]
