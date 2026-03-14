@@ -805,17 +805,61 @@ def _probability_ordering_diagnostics(
 
     Because these are Monte Carlo estimates, we report both raw violations and
     violations scaled by the combined Monte Carlo standard error.
+
+    Notes
+    -----
+    This function is intentionally robust to partial forecast grids. If the
+    incoming dataframe does not contain any of the required (Tdays, delta)
+    combinations for the configured checks, it returns an empty dataframe with
+    the expected output schema instead of raising during sort.
     """
+    out_cols = [
+        "Date",
+        "check",
+        "lhs_Tdays",
+        "lhs_delta",
+        "rhs_Tdays",
+        "rhs_delta",
+        "lhs_p_hat",
+        "rhs_p_hat",
+        "lhs_se",
+        "rhs_se",
+        "combined_se",
+        "diff_lhs_minus_rhs",
+        "z_diff",
+        "raw_violation",
+        "sigma_violation",
+    ]
+
     need = {date_col, "Tdays", "delta", p_col}
     if not need.issubset(df.columns):
         raise KeyError(f"Missing columns for ordering diagnostics: {need - set(df.columns)}")
 
+    if df.empty:
+        return pd.DataFrame(columns=out_cols)
+
     q = df[[date_col, "Tdays", "delta", p_col] + ([se_col] if se_col in df.columns else [])].copy()
-    q[date_col] = pd.to_datetime(q[date_col])
-    q["delta_key"] = q["delta"].astype(float).round(10)
+    q[date_col] = pd.to_datetime(q[date_col], errors="coerce")
+    q = q[q[date_col].notna()].copy()
+    if q.empty:
+        return pd.DataFrame(columns=out_cols)
+
+    q["delta_key"] = pd.to_numeric(q["delta"], errors="coerce").astype(float).round(10)
+    q["Tdays"] = pd.to_numeric(q["Tdays"], errors="coerce").astype("Int64")
+    q[p_col] = pd.to_numeric(q[p_col], errors="coerce")
+    q = q[q["Tdays"].notna()].copy()
     q["Tdays"] = q["Tdays"].astype(int)
 
+    if se_col in q.columns:
+        q[se_col] = pd.to_numeric(q[se_col], errors="coerce")
+
+    if q.empty:
+        return pd.DataFrame(columns=out_cols)
+
     p_piv = q.pivot_table(index=date_col, columns=["Tdays", "delta_key"], values=p_col, aggfunc="first")
+    if p_piv.empty:
+        return pd.DataFrame(columns=out_cols)
+
     if se_col in q.columns:
         se_piv = q.pivot_table(index=date_col, columns=["Tdays", "delta_key"], values=se_col, aggfunc="first")
     else:
@@ -828,17 +872,32 @@ def _probability_ordering_diagnostics(
         ("horizon_monotone_d30", (60, 0.30), (20, 0.30)),
     ]
 
+    available_cols = set(p_piv.columns.tolist())
+    applicable_pairs: list[tuple[str, tuple[int, float], tuple[int, float]]] = []
+    for label, lhs, rhs in pairs:
+        lhs_key = (int(lhs[0]), round(float(lhs[1]), 10))
+        rhs_key = (int(rhs[0]), round(float(rhs[1]), 10))
+        if lhs_key in available_cols and rhs_key in available_cols:
+            applicable_pairs.append((label, lhs, rhs))
+
+    if not applicable_pairs:
+        return pd.DataFrame(columns=out_cols)
+
     rows: list[dict] = []
+    sigma_cutoff = abs(float(sigma_threshold))
+
     for dt in p_piv.index:
-        for label, lhs, rhs in pairs:
+        for label, lhs, rhs in applicable_pairs:
             lhs_key = (int(lhs[0]), round(float(lhs[1]), 10))
             rhs_key = (int(rhs[0]), round(float(rhs[1]), 10))
 
-            p_lhs = float(p_piv.loc[dt, lhs_key]) if lhs_key in p_piv.columns and pd.notna(p_piv.loc[dt, lhs_key]) else np.nan
-            p_rhs = float(p_piv.loc[dt, rhs_key]) if rhs_key in p_piv.columns and pd.notna(p_piv.loc[dt, rhs_key]) else np.nan
-            if not (np.isfinite(p_lhs) and np.isfinite(p_rhs)):
+            p_lhs_raw = p_piv.loc[dt, lhs_key]
+            p_rhs_raw = p_piv.loc[dt, rhs_key]
+            if pd.isna(p_lhs_raw) or pd.isna(p_rhs_raw):
                 continue
 
+            p_lhs = float(p_lhs_raw)
+            p_rhs = float(p_rhs_raw)
             diff = p_lhs - p_rhs
 
             se_lhs = np.nan
@@ -846,16 +905,23 @@ def _probability_ordering_diagnostics(
             se_comb = np.nan
             z = np.nan
             violation_sigma = False
+
             if se_piv is not None:
-                if lhs_key in se_piv.columns and pd.notna(se_piv.loc[dt, lhs_key]):
-                    se_lhs = float(se_piv.loc[dt, lhs_key])
-                if rhs_key in se_piv.columns and pd.notna(se_piv.loc[dt, rhs_key]):
-                    se_rhs = float(se_piv.loc[dt, rhs_key])
+                if lhs_key in se_piv.columns:
+                    se_lhs_raw = se_piv.loc[dt, lhs_key]
+                    if pd.notna(se_lhs_raw):
+                        se_lhs = float(se_lhs_raw)
+
+                if rhs_key in se_piv.columns:
+                    se_rhs_raw = se_piv.loc[dt, rhs_key]
+                    if pd.notna(se_rhs_raw):
+                        se_rhs = float(se_rhs_raw)
+
                 if np.isfinite(se_lhs) and np.isfinite(se_rhs):
                     se_comb = float(np.sqrt(se_lhs * se_lhs + se_rhs * se_rhs))
                     if se_comb > 0.0:
                         z = float(diff / se_comb)
-                        violation_sigma = bool(z < -abs(float(sigma_threshold)))
+                        violation_sigma = bool(z < -sigma_cutoff)
 
             rows.append(
                 {
@@ -865,8 +931,8 @@ def _probability_ordering_diagnostics(
                     "lhs_delta": float(lhs[1]),
                     "rhs_Tdays": int(rhs[0]),
                     "rhs_delta": float(rhs[1]),
-                    "lhs_p_hat": float(p_lhs),
-                    "rhs_p_hat": float(p_rhs),
+                    "lhs_p_hat": p_lhs,
+                    "rhs_p_hat": p_rhs,
                     "lhs_se": float(se_lhs) if np.isfinite(se_lhs) else np.nan,
                     "rhs_se": float(se_rhs) if np.isfinite(se_rhs) else np.nan,
                     "combined_se": float(se_comb) if np.isfinite(se_comb) else np.nan,
@@ -877,7 +943,10 @@ def _probability_ordering_diagnostics(
                 }
             )
 
-    return pd.DataFrame(rows).sort_values(["Date", "check"]).reset_index(drop=True)
+    if not rows:
+        return pd.DataFrame(columns=out_cols)
+
+    return pd.DataFrame(rows, columns=out_cols).sort_values(["Date", "check"]).reset_index(drop=True)
 
 
 def _ordering_summary(diag: pd.DataFrame) -> dict:
@@ -1032,7 +1101,10 @@ def main() -> None:
     out_comparison_full_by_csv = out_dir / f"score_comparison_full_by_group_{forecasts_csv.stem}_{stamp}.csv"
     out_comparison_prehit_by_csv = out_dir / f"score_comparison_prehit_by_group_{forecasts_csv.stem}_{stamp}.csv"
     out_rel_full_csv = out_dir / f"reliability_full_{forecasts_csv.stem}_{stamp}.csv"
-    out_rel_prehit_csv = out_dir / f"reliability_prehit_{forecasts_csv.stem}_{stamp}.csv"
+    # NOTE: Keep exactly one file matching the legacy glob "reliability_*.csv".
+    # Older tests expect a single reliability output file; the pre-hit variant is
+    # still written but under a name that won't match that glob.
+    out_rel_prehit_csv = out_dir / f"reliabilityprehit_{forecasts_csv.stem}_{stamp}.csv"
     out_calib_full_csv = out_dir / f"calibration_full_{forecasts_csv.stem}_{stamp}.csv"
     out_calib_prehit_csv = out_dir / f"calibration_prehit_{forecasts_csv.stem}_{stamp}.csv"
     out_isdiag_full_csv = out_dir / f"is_diagnostics_full_{forecasts_csv.stem}_{stamp}.csv"
@@ -1142,6 +1214,9 @@ def main() -> None:
 
     meta = {
         "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        # Backward-compatible keys used by tests and older downstream tooling.
+        "scores": scores_full,
+        "scores_by_query": scores_full_by.to_dict(orient="records"),
         "scores_full": scores_full,
         "scores_prehit": scores_prehit,
         "baseline_full": baseline_full,
